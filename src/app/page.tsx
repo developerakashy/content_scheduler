@@ -2,11 +2,12 @@
 
 import { useAuthStore } from "@/store/Auth";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const verifySession = useAuthStore(state => state.verifySession);
   const hydrated = useAuthStore(state => state.hydrated);
+  
 
   useEffect(() => {
     if (hydrated) {

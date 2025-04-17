@@ -5,5 +5,4 @@ const env = {
         apikey: String(process.env.APPWRITE_API_KEY)
     }
 }
-
 export default env

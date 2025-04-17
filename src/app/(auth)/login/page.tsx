@@ -135,10 +135,10 @@ function LoginForm() {
         </div>
       </CardContent>
       <BorderBeam
-        duration={4}
+        duration={5}
         size={300}
         reverse
-        className="from-transparent via-black to-transparent"
+        className="from-blue-500 via-violet-500 to-green-500"
       />
     </Card>
   );
