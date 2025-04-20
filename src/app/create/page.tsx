@@ -1,62 +1,113 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown'
 
+import { ClientTweetCard } from "@/components/magicui/client-tweet-card";
+import { databases } from '@/models/client/config';
+import { credentialCollection, db, twitterEnum } from '@/models/name';
+import { Query } from 'appwrite';
+import { useAuthStore } from '@/store/Auth';
+
 export default function ChatComponent() {
-  const [prompt, setPrompt] = useState('');
-  const [response, setResponse] = useState({
-    twitter: '',
-    instagram: ''
- });
- const [text, setText] = useState("");
-   const [accessToken, setAccessToken] = useState("");
-   const [result, setResult] = useState(null);
-
-  const handleSend = async () => {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+    const {user} = useAuthStore()
+    const [prompt, setPrompt] = useState('');
+    const [response, setResponse] = useState({
+      twitter: '',
+      instagram: ''
     });
+    const [userTwitterInfo, setUserTwitterInfo] = useState({
+      id: '',
+      username: '',
+      name: '',
+      profile_image_url: ''
 
-    const data = await res.json();
-    console.log(data)
-    extractPosts(data.message)
-  };
-
-  function extractPosts(text: string) {
-    const twitterMatch = text.match(/\[Twitter\]\s*([\s\S]*?)\s*(?=\[Instagram\]|$)/i);
-    const instagramMatch = text.match(/\[Instagram\]\s*([\s\S]*)/i);
-
-    setResponse({
-      twitter: twitterMatch?.[1]?.trim() || '',
-      instagram: instagramMatch?.[1]?.trim() || ''
     })
-  }
+    const [twitterConnected, setTwitterConnected] = useState(false)
+
+
+    useEffect(() => {
+      const getUserTwitterInfo = async () => {
+        try {
+          if(!user) return
+          const res = await fetch('/api/twitter/status')
+
+          console.log(await res.json())
+
+          if(res.status >= 400){
+            const response = await fetch('/api/twitter/refresh')
+
+            if(response.status >= 400){
+              console.log(await response.json())
+              setTwitterConnected(false)
+              return
+            }
+
+            const data = await response.json()
+            setTwitterConnected(true)
+            setUserTwitterInfo(data.data)
+            return
+
+          }
+
+          const data = await res.json()
+          setTwitterConnected(true)
+          setUserTwitterInfo(data.data)
+
+          console.log(data)
+
+        } catch (error) {
+          console.log(error)
+        }
+
+      }
+
+      getUserTwitterInfo()
+
+      console.log('hhh')
+    }, [user])
+
+
+
+
+    const handleSend = async () => {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt }),
+      });
+
+      const data = await res.json();
+      console.log(data)
+      extractPosts(data.message)
+    };
+
+    function extractPosts(text: string) {
+      const twitterMatch = text.match(/\[Twitter\]\s*([\s\S]*?)\s*(?=\[Instagram\]|$)/i);
+      const instagramMatch = text.match(/\[Instagram\]\s*([\s\S]*)/i);
+
+      setResponse({
+        twitter: twitterMatch?.[1]?.trim() || '',
+        instagram: instagramMatch?.[1]?.trim() || ''
+      })
+    }
 
   const handleConnect = () => {
     window.location.href = "/api/auth/twitter/login";
   };
 
-  const handleTweet = async () => {
-    const res = await fetch("/api/twitter/tweet", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, accessToken }),
-    });
-    const data = await res.json();
-    setResult(data);
-  };
-
 
   return (
-    <div>
+    <div className=''>
+        <p>
+          {userTwitterInfo?.username}
+        </p>
         <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Ask me something..."
         />
         <button onClick={handleSend}>Send</button>
+        <button onClick={handleConnect}>Send</button>
 
         <div className='flex gap-4 m-4'>
             <div className='w-1/2 p-2 bg-stone-50 border rounded-xl'>
@@ -71,43 +122,11 @@ export default function ChatComponent() {
         </div>
 
 
+        <div className=''>
+          <ClientTweetCard id="1912817161782845629" />;
+        </div>
 
 
-
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Post to Twitter</h1>
-      <button onClick={handleConnect} className="mb-4 px-4 py-2 bg-blue-500 text-white rounded">
-        Connect to Twitter
-      </button>
-
-      <input
-        type="text"
-        placeholder="Access Token"
-        value={accessToken}
-        onChange={(e) => setAccessToken(e.target.value)}
-        className="w-full mb-2 px-2 py-1 border"
-      />
-
-      <textarea
-        placeholder="What's happening?"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className="w-full mb-2 p-2 border"
-      />
-
-      <button
-        onClick={handleTweet}
-        className="px-4 py-2 bg-green-600 text-white rounded"
-      >
-        Post Tweet
-      </button>
-
-      {result && (
-        <pre className="mt-4 bg-gray-100 p-2 rounded">
-          {JSON.stringify(result, null, 2)}
-        </pre>
-      )}
-    </div>
 
 
     </div>

@@ -3,10 +3,13 @@ import type { NextRequest } from 'next/server'
 import getOrCreateDB from './models/server/dbSetup'
 import getOrCreateStorage from './models/server/storageSetup'
 
+let dbInitialized = false
 export async function middleware(request: NextRequest) {
+    if (dbInitialized) return
+    dbInitialized = true
+
     await Promise.all([
         getOrCreateDB(),
-        getOrCreateStorage()
     ])
 
     return NextResponse.next()

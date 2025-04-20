@@ -1,9 +1,6 @@
 import { db } from "../name"
-import createAnswerCollection from "./answer.collection"
-import createCommentCollection from "./comment.collection"
 import { databases } from "./config"
-import createQuestionCollection from "./question.collection"
-import createVoteCollection from "./vote.collection"
+import createCredentialCollection from "./credential.collection"
 
 export default async function getOrCreateDB(){
     try {
@@ -16,10 +13,7 @@ export default async function getOrCreateDB(){
             await databases.create(db, db)
 
             await Promise.all([
-                createQuestionCollection(),
-                createAnswerCollection(),
-                createCommentCollection(),
-                createVoteCollection(),
+                createCredentialCollection()
             ])
 
             console.log('Collection created')

@@ -5,9 +5,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 
-export interface userPrefs{
-    reputation: number
-}
+export interface userPrefs{}
 
 interface IAuthStore{
     session: Models.Session | null,
@@ -57,10 +55,9 @@ export const useAuthStore = create<IAuthStore, [["zustand/persist", unknown], ["
                         account.createJWT()
                     ])
 
-                    if (!user.prefs?.reputation) await account.updatePrefs<userPrefs>({
-                        reputation: 0
-                    })
+
                     set({session, user, jwt})
+                    document.cookie = `userId=${user.$id}; path=/; max-age=86400; SameSite=Lax`;
 
                 } catch (error) {
                     console.log(error)
@@ -75,11 +72,10 @@ export const useAuthStore = create<IAuthStore, [["zustand/persist", unknown], ["
                         account.createJWT()
                     ])
 
-                    if (!user.prefs?.reputation) await account.updatePrefs<userPrefs>({
-                        reputation: 0
-                    })
 
                     set({session, user, jwt})
+
+                    document.cookie = `userId=${user.$id}; path=/; max-age=86400; SameSite=Lax`;
 
                     return {
                         success: true,
