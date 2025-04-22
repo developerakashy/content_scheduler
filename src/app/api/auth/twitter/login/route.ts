@@ -4,7 +4,6 @@ import { NextResponse } from "next/server"
 export async function GET(){
     const redirectUrl = new URL("https://twitter.com/i/oauth2/authorize")
     const cookieStore = cookies()
-    console.log((await cookieStore).getAll())
 
     redirectUrl.searchParams.set("response_type", "code")
     redirectUrl.searchParams.set("client_id", process.env.TWITTER_CLIENT_ID!)

@@ -7,6 +7,7 @@ import { databases } from '@/models/client/config';
 import { credentialCollection, db, twitterEnum } from '@/models/name';
 import { Query } from 'appwrite';
 import { useAuthStore } from '@/store/Auth';
+import { Button } from '@/components/ui/button';
 
 export default function ChatComponent() {
     const {user} = useAuthStore()
@@ -30,30 +31,18 @@ export default function ChatComponent() {
         try {
           if(!user) return
           const res = await fetch('/api/twitter/status')
+          const data = await res.json()
+          console.log(data)
 
-          console.log(await res.json())
-
-          if(res.status >= 400){
-            const response = await fetch('/api/twitter/refresh')
-
-            if(response.status >= 400){
-              console.log(await response.json())
-              setTwitterConnected(false)
-              return
-            }
-
-            const data = await response.json()
-            setTwitterConnected(true)
+          if(!res.ok){
+            setTwitterConnected(false)
             setUserTwitterInfo(data.data)
             return
-
           }
 
-          const data = await res.json()
           setTwitterConnected(true)
           setUserTwitterInfo(data.data)
 
-          console.log(data)
 
         } catch (error) {
           console.log(error)
@@ -63,7 +52,6 @@ export default function ChatComponent() {
 
       getUserTwitterInfo()
 
-      console.log('hhh')
     }, [user])
 
 
@@ -95,6 +83,32 @@ export default function ChatComponent() {
     window.location.href = "/api/auth/twitter/login";
   };
 
+  const handlePost = async (text:string) => {
+      if(!user) return
+
+      const existingDoc = await databases.listDocuments(db, credentialCollection, [
+        Query.equal('platform', twitterEnum),
+        Query.equal('userId', user?.$id),
+      ])
+
+
+
+      const access_token = existingDoc.documents[0].accessToken
+
+      if(!access_token) return
+
+
+      const res = await fetch('/api/twitter/tweet', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({text, access_token})
+      })
+
+      const resData = await res.json()
+
+      console.log(resData)
+  }
+
 
   return (
     <div className=''>
@@ -102,12 +116,14 @@ export default function ChatComponent() {
           {userTwitterInfo?.username}
         </p>
         <textarea
+            className='border'
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Ask me something..."
         />
-        <button onClick={handleSend}>Send</button>
-        <button onClick={handleConnect}>Send</button>
+        <Button onClick={handleSend}>Create Post</Button>
+
+
 
         <div className='flex gap-4 m-4'>
             <div className='w-1/2 p-2 bg-stone-50 border rounded-xl'>
@@ -119,13 +135,18 @@ export default function ChatComponent() {
                 <p className='mb-2 font-bold'>Instagram Post text:</p>
                 <ReactMarkdown>{response.instagram}</ReactMarkdown>
             </div>
+            {
+              !twitterConnected && <Button onClick={handleConnect}>Connect X</Button>
+            }
         </div>
 
 
         <div className=''>
-          <ClientTweetCard id="1912817161782845629" />;
+          <Button className='cursor-pointer m-2' onClick={() => handlePost(response.twitter)}>
+            POST TWEET
+          </Button>
+          {/* <ClientTweetCard id="1912817161782845629" />; */}
         </div>
-
 
 
 
